@@ -1,14 +1,3 @@
-/**
- * Memory Game
- * Классическая игра на развитие памяти "Найди пару".
- * Вся разметка генерируется динамически через document.createElement.
- * Используется чистый Vanilla JS (ES6+), без внешних библиотек.
- */
-
-// ===== Константы =====
-
-// ИСПРАВЛЕНО: Заменили эмодзи на пути к картинкам животных.
-// Переименуйте расширения или названия файлов, если они отличаются (.png / .jpg / .svg).
 const ANIMAL_IMAGES = [
   "/assets/deer.jpg",
   "/assets/fox.jpg",
@@ -25,8 +14,6 @@ const FLIP_DELAY_MS = 1000;
 const LEADERBOARD_KEY = "memoryGameLeaderboard";
 const LEADERBOARD_MAX_SIZE = 10;
 
-// ===== Состояние игры =====
-
 const state = {
   moves: 0,
   matchedPairs: 0,
@@ -41,17 +28,6 @@ const state = {
 
 const activeModals = [];
 
-// ===== Утилиты создания DOM =====
-
-/**
- * Создаёт DOM-элемент с заданными параметрами.
- * @param {string} tag - Имя тега.
- * @param {Object} options - Опции создания.
- * @param {string} [options.className] - CSS-классы через пробел.
- * @param {string} [options.text] - Текстовое содержимое.
- * @param {string} [options.ariaLabel] - Значение aria-label.
- * @returns {HTMLElement}
- */
 function createElement(tag, options = {}) {
   const element = document.createElement(tag);
 
@@ -73,24 +49,12 @@ function createElement(tag, options = {}) {
   return element;
 }
 
-/**
- * Полностью очищает содержимое элемента через DOM API.
- * @param {HTMLElement} element
- */
 function clearElement(element) {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
   }
 }
 
-// ===== Игровая логика =====
-
-/**
- * Перемешивает массив алгоритмом Фишера-Йейтса.
- * Возвращает новый массив, не мутируя исходный.
- * @param {Array} array
- * @returns {Array}
- */
 function shuffle(array) {
   const result = [...array];
 
@@ -102,11 +66,6 @@ function shuffle(array) {
   return result;
 }
 
-/**
- * Форматирует дату в формат ДД.ММ.ГГГГ.
- * @param {Date} date
- * @returns {string}
- */
 function formatDate(date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -114,20 +73,12 @@ function formatDate(date) {
   return `${day}.${month}.${year}`;
 }
 
-/**
- * Обновляет отображение счётчиков ходов и найденных пар.
- */
+
 function updateCounters() {
   state.movesElement.textContent = String(state.moves);
   state.pairsElement.textContent = `${state.matchedPairs} / ${TOTAL_PAIRS}`;
 }
 
-/**
- * Создаёт DOM-элемент карточки.
- * @param {string} imagePath - Путь к изображению животного.
- * @param {number} index - Индекс карточки на поле.
- * @returns {HTMLElement}
- */
 function createCardElement(imagePath, index) {
   const card = createElement("div", {
     className: "card",
@@ -137,15 +88,10 @@ function createCardElement(imagePath, index) {
   card.dataset.index = String(index);
 
   const inner = createElement("div", { className: "card-inner" });
-
-  // ИСПРАВЛЕНО: Вместо вывода текста-эмодзи создаем тег <img> для картинки животного
   const front = createElement("div", { className: "card-face card-front" });
   const img = createElement("img", { className: "card-image" });
   img.src = imagePath;
   img.alt = "Животное";
-  img.style.width = "80%";
-  img.style.height = "80%";
-  img.style.objectFit = "contain";
   img.style.userSelect = "none";
   img.setAttribute("draggable", "false");
   front.append(img);
@@ -160,13 +106,8 @@ function createCardElement(imagePath, index) {
   return card;
 }
 
-/**
- * Отрисовывает игровое поле с перемешанными карточками.
- */
 function renderBoard() {
   clearElement(state.boardElement);
-
-  // ИСПРАВЛЕНО: Перемешиваем массив с путями к картинкам вместо эмодзи
   const deck = shuffle([...ANIMAL_IMAGES, ...ANIMAL_IMAGES]);
 
   deck.forEach((imagePath, index) => {
@@ -175,10 +116,6 @@ function renderBoard() {
   });
 }
 
-/**
- * Обрабатывает клик по карточке.
- * @param {HTMLElement} card
- */
 function handleCardClick(card) {
   if (state.isBoardLocked) return;
   if (state.isGameFinished) return;
@@ -198,12 +135,8 @@ function handleCardClick(card) {
   }
 }
 
-/**
- * Проверяет, совпали ли две открытые карточки.
- */
 function checkMatch() {
-  const [firstCard, secondCard] = state.flippedCards;
-  // ИСПРАВЛЕНО: Сравниваем data-атрибуты путей к изображениям
+  const [firstCard, secondCard] = state.flippedCards; 
   const isMatch = firstCard.dataset.image === secondCard.dataset.image;
 
   if (isMatch) {
@@ -230,10 +163,6 @@ function checkMatch() {
   }
 }
 
-/**
- * Сбрасывает игру: отменяет таймеры, закрывает модалки,
- * обнуляет счётчики и заново перемешивает карты.
- */
 function resetGame() {
   clearTimeout(state.pendingTimeoutId);
   state.pendingTimeoutId = null;
@@ -250,12 +179,6 @@ function resetGame() {
   renderBoard();
 }
 
-// ===== Таблица лидеров =====
-
-/**
- * Сохраняет результат завершённой игры в localStorage.
- * @param {number} moves
- */
 function saveResult(moves) {
   const stored = localStorage.getItem(LEADERBOARD_KEY);
   const results = stored ? JSON.parse(stored) : [];
@@ -278,16 +201,10 @@ function saveResult(moves) {
   localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(topResults));
 }
 
-/**
- * Возвращает отсортированный список лучших результатов.
- * @returns {Array}
- */
 function getLeaderboard() {
   const stored = localStorage.getItem(LEADERBOARD_KEY);
   return stored ? JSON.parse(stored) : [];
 }
-
-// ===== Универсальный компонент модального окна =====
 
 class Modal {
   constructor({ title, buildContent, actions }) {
@@ -373,12 +290,6 @@ function closeAllModals() {
   [...activeModals].forEach((modal) => modal.close());
 }
 
-// ===== Конкретные модальные окна =====
-
-/**
- * Открывает модальное окно победы.
- * @param {number} moves
- */
 function showWinModal(moves) {
   const modal = new Modal({
     title: "Поздравляем!",
@@ -403,9 +314,6 @@ function showWinModal(moves) {
   modal.open();
 }
 
-/**
- * Открывает модальное окно таблицы лидеров.
- */
 function showLeaderboardModal() {
   const results = getLeaderboard();
 
@@ -454,11 +362,6 @@ function showLeaderboardModal() {
   modal.open();
 }
 
-/**
- * Склоняет слово "ход" в зависимости от числа.
- * @param {number} moves
- * @returns {string}
- */
 function declineMoves(moves) {
   const lastDigit = moves % 10;
   const lastTwoDigits = moves % 100;
@@ -475,12 +378,6 @@ function declineMoves(moves) {
   return "ходов";
 }
 
-// ===== Построение интерфейса =====
-
-/**
- * Создаёт шапку с названием.
- * @returns {HTMLElement}
- */
 function createHeader() {
   const header = createElement("header", { className: "header" });
   const title = createElement("h1", {
@@ -505,10 +402,6 @@ function createHeader() {
   return header;
 }
 
-/**
- * Создаёт боковую панель сайдбара (кнопки + ходы/пары).
- * @returns {HTMLElement}
- */
 function createSidebar() {
   const sidebar = createElement("aside", { className: "sidebar" });
 
@@ -542,24 +435,14 @@ function createSidebar() {
   return sidebar;
 }
 
-/**
- * Создаёт контейнер игрового поля.
- * @returns {HTMLElement}
- */
 function createBoard() {
   state.boardElement = createElement("div", { className: "game-board" });
   return state.boardElement;
 }
 
-/**
- * Инициализирует приложение.
- */
-function initApp() {
-  document.body.innerHTML = ""; // Чистим body перед отрисовкой
-  document.body.append(createHeader(), createSidebar(), createBoard());
+function initApp() {  
+  document.body.replaceChildren(createHeader(), createSidebar(), createBoard());
   resetGame();
 }
-
-// ===== Запуск =====
 
 initApp();
