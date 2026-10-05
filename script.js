@@ -1,12 +1,12 @@
 const ANIMAL_IMAGES = [
-  "/assets/deer.jpg",
-  "/assets/fox.jpg",
-  "/assets/koala.jpg",
-  "/assets/owl.jpg",
-  "/assets/panda.jpg",
-  "/assets/penguin.jpg",
-  "/assets/raccoon.jpg",
-  "/assets/tiger.jpg",
+  "assets/deer.jpg",
+  "assets/fox.jpg",
+  "assets/koala.jpg",
+  "assets/owl.jpg",
+  "assets/panda.jpg",
+  "assets/penguin.jpg",
+  "assets/raccoon.jpg",
+  "assets/tiger.jpg",
 ];
 
 const TOTAL_PAIRS = 8;
@@ -73,7 +73,6 @@ function formatDate(date) {
   return `${day}.${month}.${year}`;
 }
 
-
 function updateCounters() {
   state.movesElement.textContent = String(state.moves);
   state.pairsElement.textContent = `${state.matchedPairs} / ${TOTAL_PAIRS}`;
@@ -136,7 +135,7 @@ function handleCardClick(card) {
 }
 
 function checkMatch() {
-  const [firstCard, secondCard] = state.flippedCards; 
+  const [firstCard, secondCard] = state.flippedCards;
   const isMatch = firstCard.dataset.image === secondCard.dataset.image;
 
   if (isMatch) {
@@ -440,7 +439,7 @@ function createBoard() {
   return state.boardElement;
 }
 
-function initApp() {  
+function initApp() {
   document.body.replaceChildren(createHeader(), createSidebar(), createBoard());
   resetGame();
 }
