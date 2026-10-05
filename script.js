@@ -7,10 +7,22 @@
 
 // ===== Константы =====
 
-const EMOJIS = ['🐶', '🐱', '🦊', '🐼', '🐨', '🐯', '🦁', '🐷'];
+// ИСПРАВЛЕНО: Заменили эмодзи на пути к картинкам животных.
+// Переименуйте расширения или названия файлов, если они отличаются (.png / .jpg / .svg).
+const ANIMAL_IMAGES = [
+  "/assets/deer.jpg",
+  "/assets/fox.jpg",
+  "/assets/koala.jpg",
+  "/assets/owl.jpg",
+  "/assets/panda.jpg",
+  "/assets/penguin.jpg",
+  "/assets/raccoon.jpg",
+  "/assets/tiger.jpg",
+];
+
 const TOTAL_PAIRS = 8;
 const FLIP_DELAY_MS = 1000;
-const LEADERBOARD_KEY = 'memoryGameLeaderboard';
+const LEADERBOARD_KEY = "memoryGameLeaderboard";
 const LEADERBOARD_MAX_SIZE = 10;
 
 // ===== Состояние игры =====
@@ -45,7 +57,7 @@ function createElement(tag, options = {}) {
 
   if (options.className) {
     options.className
-      .split(' ')
+      .split(" ")
       .filter(Boolean)
       .forEach((className) => element.classList.add(className));
   }
@@ -55,7 +67,7 @@ function createElement(tag, options = {}) {
   }
 
   if (options.ariaLabel) {
-    element.setAttribute('aria-label', options.ariaLabel);
+    element.setAttribute("aria-label", options.ariaLabel);
   }
 
   return element;
@@ -96,8 +108,8 @@ function shuffle(array) {
  * @returns {string}
  */
 function formatDate(date) {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
 }
@@ -112,26 +124,38 @@ function updateCounters() {
 
 /**
  * Создаёт DOM-элемент карточки.
- * @param {string} emoji - Эмодзи, изображённое на карточке.
+ * @param {string} imagePath - Путь к изображению животного.
  * @param {number} index - Индекс карточки на поле.
  * @returns {HTMLElement}
  */
-function createCardElement(emoji, index) {
-  const card = createElement('div', {
-    className: 'card',
-    ariaLabel: 'Карточка',
+function createCardElement(imagePath, index) {
+  const card = createElement("div", {
+    className: "card",
+    ariaLabel: "Карточка",
   });
-  card.dataset.emoji = emoji;
+  card.dataset.image = imagePath;
   card.dataset.index = String(index);
 
-  const inner = createElement('div', { className: 'card-inner' });
-  const front = createElement('div', { className: 'card-face card-front', text: emoji });
-  const back = createElement('div', { className: 'card-face card-back' });
+  const inner = createElement("div", { className: "card-inner" });
+
+  // ИСПРАВЛЕНО: Вместо вывода текста-эмодзи создаем тег <img> для картинки животного
+  const front = createElement("div", { className: "card-face card-front" });
+  const img = createElement("img", { className: "card-image" });
+  img.src = imagePath;
+  img.alt = "Животное";
+  img.style.width = "80%";
+  img.style.height = "80%";
+  img.style.objectFit = "contain";
+  img.style.userSelect = "none";
+  img.setAttribute("draggable", "false");
+  front.append(img);
+
+  const back = createElement("div", { className: "card-face card-back" });
 
   inner.append(front, back);
   card.append(inner);
 
-  card.addEventListener('click', () => handleCardClick(card));
+  card.addEventListener("click", () => handleCardClick(card));
 
   return card;
 }
@@ -142,10 +166,11 @@ function createCardElement(emoji, index) {
 function renderBoard() {
   clearElement(state.boardElement);
 
-  const deck = shuffle([...EMOJIS, ...EMOJIS]);
+  // ИСПРАВЛЕНО: Перемешиваем массив с путями к картинкам вместо эмодзи
+  const deck = shuffle([...ANIMAL_IMAGES, ...ANIMAL_IMAGES]);
 
-  deck.forEach((emoji, index) => {
-    const card = createCardElement(emoji, index);
+  deck.forEach((imagePath, index) => {
+    const card = createCardElement(imagePath, index);
     state.boardElement.append(card);
   });
 }
@@ -157,16 +182,19 @@ function renderBoard() {
 function handleCardClick(card) {
   if (state.isBoardLocked) return;
   if (state.isGameFinished) return;
-  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if (card.classList.contains("flipped") || card.classList.contains("matched"))
+    return;
 
-  card.classList.add('flipped');
+  card.classList.add("flipped");
   state.flippedCards.push(card);
 
   if (state.flippedCards.length === 2) {
     state.moves += 1;
     updateCounters();
     state.isBoardLocked = true;
-    checkMatch();
+    setTimeout(() => {
+      checkMatch();
+    }, 550);
   }
 }
 
@@ -175,11 +203,12 @@ function handleCardClick(card) {
  */
 function checkMatch() {
   const [firstCard, secondCard] = state.flippedCards;
-  const isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+  // ИСПРАВЛЕНО: Сравниваем data-атрибуты путей к изображениям
+  const isMatch = firstCard.dataset.image === secondCard.dataset.image;
 
   if (isMatch) {
-    firstCard.classList.add('matched');
-    secondCard.classList.add('matched');
+    firstCard.classList.add("matched");
+    secondCard.classList.add("matched");
     state.matchedPairs += 1;
     state.flippedCards = [];
     state.isBoardLocked = false;
@@ -192,8 +221,8 @@ function checkMatch() {
     }
   } else {
     state.pendingTimeoutId = setTimeout(() => {
-      firstCard.classList.remove('flipped');
-      secondCard.classList.remove('flipped');
+      firstCard.classList.remove("flipped");
+      secondCard.classList.remove("flipped");
       state.flippedCards = [];
       state.isBoardLocked = false;
       state.pendingTimeoutId = null;
@@ -260,42 +289,36 @@ function getLeaderboard() {
 
 // ===== Универсальный компонент модального окна =====
 
-/**
- * Класс для создания и управления модальными окнами.
- */
 class Modal {
-  /**
-   * @param {Object} options
-   * @param {string} options.title - Заголовок окна.
-   * @param {Function} [options.buildContent] - Функция, заполняющая тело окна.
-   * @param {Array} options.actions - Массив действий-кнопок.
-   */
   constructor({ title, buildContent, actions }) {
-    this.overlay = createElement('div', { className: 'modal-overlay' });
-    this.modal = createElement('div', { className: 'modal' });
+    this.overlay = createElement("div", { className: "modal-overlay" });
+    this.modal = createElement("div", { className: "modal" });
 
-    this.header = createElement('div', { className: 'modal-header' });
-    this.titleElement = createElement('h2', { className: 'modal-title', text: title });
-    this.closeButton = createElement('button', {
-      className: 'modal-close',
-      ariaLabel: 'Закрыть',
-      text: '×',
+    this.header = createElement("div", { className: "modal-header" });
+    this.titleElement = createElement("h2", {
+      className: "modal-title",
+      text: title,
+    });
+    this.closeButton = createElement("button", {
+      className: "modal-close",
+      ariaLabel: "Закрыть",
+      text: "×",
     });
     this.header.append(this.titleElement, this.closeButton);
 
-    this.content = createElement('div', { className: 'modal-content' });
-    if (typeof buildContent === 'function') {
+    this.content = createElement("div", { className: "modal-content" });
+    if (typeof buildContent === "function") {
       buildContent(this.content);
     }
 
-    this.footer = createElement('div', { className: 'modal-footer' });
+    this.footer = createElement("div", { className: "modal-footer" });
     actions.forEach((action) => {
-      const button = createElement('button', {
-        className: `btn ${action.className || ''}`,
+      const button = createElement("button", {
+        className: `btn ${action.className || ""}`,
         text: action.text,
       });
-      button.addEventListener('click', () => {
-        if (typeof action.handler === 'function') {
+      button.addEventListener("click", () => {
+        if (typeof action.handler === "function") {
           action.handler();
         }
         if (action.close !== false) {
@@ -308,22 +331,24 @@ class Modal {
     this.modal.append(this.header, this.content, this.footer);
     this.overlay.append(this.modal);
 
-    this.closeButton.addEventListener('click', () => this.close());
-    this.overlay.addEventListener('click', (event) => this.handleOverlayClick(event));
+    this.closeButton.addEventListener("click", () => this.close());
+    this.overlay.addEventListener("click", (event) =>
+      this.handleOverlayClick(event),
+    );
     this.handleEscape = (event) => this.handleEscapeKey(event);
   }
 
   open() {
     document.body.append(this.overlay);
-    document.body.classList.add('modal-open');
-    document.addEventListener('keydown', this.handleEscape);
+    document.body.classList.add("modal-open");
+    document.addEventListener("keydown", this.handleEscape);
     activeModals.push(this);
   }
 
   close() {
     this.overlay.remove();
-    document.body.classList.remove('modal-open');
-    document.removeEventListener('keydown', this.handleEscape);
+    document.body.classList.remove("modal-open");
+    document.removeEventListener("keydown", this.handleEscape);
 
     const index = activeModals.indexOf(this);
     if (index !== -1) {
@@ -338,15 +363,12 @@ class Modal {
   }
 
   handleEscapeKey(event) {
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       this.close();
     }
   }
 }
 
-/**
- * Закрывает все открытые модальные окна.
- */
 function closeAllModals() {
   [...activeModals].forEach((modal) => modal.close());
 }
@@ -359,22 +381,22 @@ function closeAllModals() {
  */
 function showWinModal(moves) {
   const modal = new Modal({
-    title: 'Поздравляем!',
+    title: "Поздравляем!",
     buildContent: (content) => {
-      const message = createElement('p', {
+      const message = createElement("p", {
         text: `Вы нашли все пары за ${moves} ${declineMoves(moves)}!`,
       });
       content.append(message);
     },
     actions: [
       {
-        text: 'Новая игра',
-        className: 'btn-primary',
+        text: "Новая игра",
+        className: "btn-primary",
         handler: () => resetGame(),
       },
       {
-        text: 'Закрыть',
-        className: 'btn-secondary',
+        text: "Закрыть",
+        className: "btn-secondary",
       },
     ],
   });
@@ -388,33 +410,33 @@ function showLeaderboardModal() {
   const results = getLeaderboard();
 
   const modal = new Modal({
-    title: 'Таблица лидеров',
+    title: "Таблица лидеров",
     buildContent: (content) => {
       if (results.length === 0) {
-        const emptyMessage = createElement('p', {
-          className: 'empty-message',
-          text: 'Пока нет результатов',
+        const emptyMessage = createElement("p", {
+          className: "empty-message",
+          text: "Пока нет результатов",
         });
         content.append(emptyMessage);
         return;
       }
 
-      const table = createElement('table', { className: 'leaderboard-table' });
-      const thead = createElement('thead');
-      const headerRow = createElement('tr');
+      const table = createElement("table", { className: "leaderboard-table" });
+      const thead = createElement("thead");
+      const headerRow = createElement("tr");
 
-      ['Место', 'Ходы', 'Дата'].forEach((text) => {
-        const th = createElement('th', { text });
+      ["Место", "Ходы", "Дата"].forEach((text) => {
+        const th = createElement("th", { text });
         headerRow.append(th);
       });
       thead.append(headerRow);
 
-      const tbody = createElement('tbody');
+      const tbody = createElement("tbody");
       results.forEach((result, index) => {
-        const row = createElement('tr');
-        const placeCell = createElement('td', { text: String(index + 1) });
-        const movesCell = createElement('td', { text: String(result.moves) });
-        const dateCell = createElement('td', { text: result.date });
+        const row = createElement("tr");
+        const placeCell = createElement("td", { text: String(index + 1) });
+        const movesCell = createElement("td", { text: String(result.moves) });
+        const dateCell = createElement("td", { text: result.date });
         row.append(placeCell, movesCell, dateCell);
         tbody.append(row);
       });
@@ -424,8 +446,8 @@ function showLeaderboardModal() {
     },
     actions: [
       {
-        text: 'Закрыть',
-        className: 'btn-secondary',
+        text: "Закрыть",
+        className: "btn-secondary",
       },
     ],
   });
@@ -442,36 +464,40 @@ function declineMoves(moves) {
   const lastTwoDigits = moves % 100;
 
   if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-    return 'ходов';
+    return "ходов";
   }
   if (lastDigit === 1) {
-    return 'ход';
+    return "ход";
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
-    return 'хода';
+    return "хода";
   }
-  return 'ходов';
+  return "ходов";
 }
 
 // ===== Построение интерфейса =====
 
 /**
- * Создаёт шапку с кнопками управления.
+ * Создаёт шапку с названием.
  * @returns {HTMLElement}
  */
 function createHeader() {
-  const header = createElement('header', { className: 'header' });
-  const title = createElement('h1', { className: 'header-title', text: 'Memory Game' });
-  const nav = createElement('nav', { className: 'header-nav' });
-
-  const newGameButton = createElement('button', { className: 'btn', text: 'Новая игра' });
-  newGameButton.addEventListener('click', resetGame);
-
-  const leaderboardButton = createElement('button', {
-    className: 'btn',
-    text: 'Таблица лидеров',
+  const header = createElement("header", { className: "header" });
+  const title = createElement("h1", {
+    className: "header-title",
+    text: "Memory Game",
   });
-  leaderboardButton.addEventListener('click', showLeaderboardModal);
+  const nav = createElement("nav", { className: "header-nav" });
+  const newGameButton = createElement("button", {
+    className: "btn",
+    text: "Новая игра",
+  });
+  newGameButton.addEventListener("click", resetGame);
+  const leaderboardButton = createElement("button", {
+    className: "btn",
+    text: "Таблица лидеров",
+  });
+  leaderboardButton.addEventListener("click", showLeaderboardModal);
 
   nav.append(newGameButton, leaderboardButton);
   header.append(title, nav);
@@ -480,24 +506,40 @@ function createHeader() {
 }
 
 /**
- * Создаёт блок счётчиков.
+ * Создаёт боковую панель сайдбара (кнопки + ходы/пары).
  * @returns {HTMLElement}
  */
-function createStats() {
-  const stats = createElement('div', { className: 'stats' });
+function createSidebar() {
+  const sidebar = createElement("aside", { className: "sidebar" });
 
-  const movesStat = createElement('div', { className: 'stat' });
-  const movesLabel = createElement('span', { className: 'stat-label', text: 'Ходы' });
-  state.movesElement = createElement('span', { className: 'stat-value', text: '0' });
+  const stats = createElement("div", { className: "stats" });
+
+  const movesStat = createElement("div", { className: "stat" });
+  const movesLabel = createElement("span", {
+    className: "stat-label",
+    text: "Ходы",
+  });
+  state.movesElement = createElement("span", {
+    className: "stat-value",
+    text: "0",
+  });
   movesStat.append(movesLabel, state.movesElement);
 
-  const pairsStat = createElement('div', { className: 'stat' });
-  const pairsLabel = createElement('span', { className: 'stat-label', text: 'Пары' });
-  state.pairsElement = createElement('span', { className: 'stat-value', text: `0 / ${TOTAL_PAIRS}` });
+  const pairsStat = createElement("div", { className: "stat" });
+  const pairsLabel = createElement("span", {
+    className: "stat-label",
+    text: "Пары",
+  });
+  state.pairsElement = createElement("span", {
+    className: "stat-value",
+    text: `0 / ${TOTAL_PAIRS}`,
+  });
   pairsStat.append(pairsLabel, state.pairsElement);
 
   stats.append(movesStat, pairsStat);
-  return stats;
+  sidebar.append(stats);
+
+  return sidebar;
 }
 
 /**
@@ -505,7 +547,7 @@ function createStats() {
  * @returns {HTMLElement}
  */
 function createBoard() {
-  state.boardElement = createElement('div', { className: 'game-board' });
+  state.boardElement = createElement("div", { className: "game-board" });
   return state.boardElement;
 }
 
@@ -513,7 +555,8 @@ function createBoard() {
  * Инициализирует приложение.
  */
 function initApp() {
-  document.body.append(createHeader(), createStats(), createBoard());
+  document.body.innerHTML = ""; // Чистим body перед отрисовкой
+  document.body.append(createHeader(), createSidebar(), createBoard());
   resetGame();
 }
 
